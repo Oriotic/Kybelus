@@ -50,6 +50,9 @@ class MainActivity : AppCompatActivity() {
                 "Calendar" -> loadFragment(CalendarFragment(), "Calendar")
                 else -> loadFragment(TasksFragment(), "Tasks")
             }
+        } else {
+            val defaultView = prefs.getString(SettingsFragment.KEY_DEFAULT_VIEW, "Tasks")
+            supportActionBar?.title = "🌙 $defaultView"
         }
 
         val pm = getSystemService(android.content.Context.POWER_SERVICE) as android.os.PowerManager
