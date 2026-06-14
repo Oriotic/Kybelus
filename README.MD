@@ -96,9 +96,12 @@ app/
     │   ├── SettingsFragment.kt
     │   └── KybelusDatabase.kt
     └── res/
-        ├── layout/        # XML layouts
+        ├── layout/        # XML layouts (fragments, dialogs, list items)
         ├── anim/          # Transition animations
-        └── drawable/      # Shape drawables
+        ├── drawable/      # Shape drawables
+        ├── menu/          # Navigation menu
+        ├── values/        # Colors, strings, themes, styles
+        └── values-night/  # Dark mode overrides
 ```
 
 ---
