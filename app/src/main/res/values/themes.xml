@@ -1,0 +1,24 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Base.Theme.Kybelus" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryVariant">@color/primary_dark</item>
+        <item name="colorSecondary">@color/secondary</item>
+        <item name="android:colorBackground">@color/background</item>
+        <item name="android:statusBarColor">@color/primary</item>
+
+        <!-- NavigationView rounded corners -->
+        <item name="navigationViewStyle">@style/Widget.NoRoundedNav</item>
+    </style>
+
+    <style name="Theme.Kybelus" parent="Base.Theme.Kybelus" />
+
+    <style name="Widget.NoRoundedNav" parent="Widget.Material3.NavigationView">
+        <item name="shapeAppearance">@style/ShapeAppearance.NoCorners</item>
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.NoCorners</item>
+    </style>
+
+    <style name="ShapeAppearance.NoCorners" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">0dp</item>
+    </style>
+</resources>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/app_background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/card_background"
+        android:padding="8dp">
+
+        <TextView
+            android:id="@+id/tvMonthYear"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"/>
+
+    </LinearLayout>
+
+    <GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:columnCount="7"
+        android:background="@color/card_background"
+        android:paddingBottom="4dp">
+
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_columnWeight="1" android:gravity="center"
+            android:text="Sun" android:textSize="12sp" android:textColor="@color/text_secondary"/>
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_columnWeight="1" android:gravity="center"
+            android:text="Mon" android:textSize="12sp" android:textColor="@color/text_secondary"/>
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_columnWeight="1" android:gravity="center"
+            android:text="Tue" android:textSize="12sp" android:textColor="@color/text_secondary"/>
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_columnWeight="1" android:gravity="center"
+            android:text="Wed" android:textSize="12sp" android:textColor="@color/text_secondary"/>
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_columnWeight="1" android:gravity="center"
+            android:text="Thu" android:textSize="12sp" android:textColor="@color/text_secondary"/>
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_columnWeight="1" android:gravity="center"
+            android:text="Fri" android:textSize="12sp" android:textColor="@color/text_secondary"/>
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_columnWeight="1" android:gravity="center"
+            android:text="Sat" android:textSize="12sp" android:textColor="@color/text_secondary"/>
+
+    </GridLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvCalendar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/card_background"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#E0D8F0"
+        android:layout_marginTop="8dp"/>
+
+    <TextView
+        android:id="@+id/tvSelectedDate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_primary"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvDayItems"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="8dp"/>
+
+</LinearLayout>

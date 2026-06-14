@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/card_background">
+
+    <!-- Top bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="@color/primary"
+        android:padding="16dp"
+        android:gravity="center_vertical">
+
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@android:drawable/ic_menu_revert"
+            android:background="@android:color/transparent"
+            app:tint="#FFFFFF"/>
+
+        <TextView
+            android:id="@+id/tvEditorTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="📝 New Note"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginStart="12dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSaveNote"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Save"
+            android:textColor="@color/primary"
+            app:backgroundTint="#FFFFFF"
+            app:cornerRadius="24dp"/>
+
+    </LinearLayout>
+
+    <!-- Title -->
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/etEditorTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Title"
+        android:textColor="#1C1B1F"
+        android:textColorHint="#9E8BB5"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:background="@android:color/transparent"
+        android:padding="16dp"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#F0EAFF"/>
+
+    <!-- Content -->
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/etEditorContent"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:hint="Start writing..."
+        android:textColor="#1C1B1F"
+        android:textColorHint="#9E8BB5"
+        android:textSize="16sp"
+        android:background="@android:color/transparent"
+        android:padding="16dp"
+        android:gravity="top"/>
+
+    <!-- Color picker row -->
+    <HorizontalScrollView
+        android:id="@+id/colorPickerRow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/app_background"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <View android:id="@+id/color1" android:layout_width="36dp" android:layout_height="36dp" android:background="@drawable/bg_color_circle" android:backgroundTint="#FFFFFF" android:layout_margin="6dp"/>
+            <View android:id="@+id/color2" android:layout_width="36dp" android:layout_height="36dp" android:background="@drawable/bg_color_circle" android:backgroundTint="#FFE4E4" android:layout_margin="6dp"/>
+            <View android:id="@+id/color3" android:layout_width="36dp" android:layout_height="36dp" android:background="@drawable/bg_color_circle" android:backgroundTint="#E4F0FF" android:layout_margin="6dp"/>
+            <View android:id="@+id/color4" android:layout_width="36dp" android:layout_height="36dp" android:background="@drawable/bg_color_circle" android:backgroundTint="#E4FFE9" android:layout_margin="6dp"/>
+            <View android:id="@+id/color5" android:layout_width="36dp" android:layout_height="36dp" android:background="@drawable/bg_color_circle" android:backgroundTint="#FFF8E4" android:layout_margin="6dp"/>
+            <View android:id="@+id/color6" android:layout_width="36dp" android:layout_height="36dp" android:background="@drawable/bg_color_circle" android:backgroundTint="#F3E4FF" android:layout_margin="6dp"/>
+
+        </LinearLayout>
+
+    </HorizontalScrollView>
+
+    <!-- List picker row -->
+    <LinearLayout
+        android:id="@+id/listPickerRow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/app_background"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="12dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:visibility="gone">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/listBullet"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="• Bullet"
+            android:textColor="@color/primary"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/listCheckbox"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="☐ Check"
+            android:textColor="@color/primary"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/listDash"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="— Dash"
+            android:textColor="@color/primary"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/listNone"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="✕ None"
+            android:textColor="@color/error"/>
+
+    </LinearLayout>
+
+    <!-- Bottom toolbar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#FFFFFF"
+        android:padding="8dp"
+        android:elevation="8dp"
+        android:gravity="center_vertical">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnColor"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="🎨"
+            android:textSize="20sp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnBold"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="B"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/primary"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnItalic"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="I"
+            android:textSize="18sp"
+            android:textStyle="italic"
+            android:textColor="@color/primary"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnList"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="☰"
+            android:textSize="18sp"
+            android:textColor="@color/primary"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnFontSize"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="A"
+            android:textSize="18sp"
+            android:textColor="@color/primary"/>
+
+    </LinearLayout>
+
+</LinearLayout>
