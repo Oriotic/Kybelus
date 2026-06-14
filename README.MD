@@ -105,5 +105,3 @@ app/
 ```
 
 ---
-
-<p align="center">Made by Oriotic🌙</p>
