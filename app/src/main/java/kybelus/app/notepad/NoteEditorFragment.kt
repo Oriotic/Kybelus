@@ -92,7 +92,7 @@ class NoteEditorFragment(
             val title = binding.etEditorTitle.text.toString()
             val content = Html.toHtml(
                 binding.etEditorContent.text,
-                Html.TO_HTML_PARAGRAPH_LINES_CONSECUTIVE
+                Html.TO_HTML_PARAGRAPH_LINES_INDIVIDUAL
             )
             val finalTitle = if (title.isNotEmpty()) title else ""
 
