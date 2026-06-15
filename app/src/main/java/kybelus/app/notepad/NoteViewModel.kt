@@ -61,8 +61,7 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
             } else {
                 filtered.filter {
                     it.title.contains(query, ignoreCase = true) ||
-                            android.text.Html.fromHtml(it.content,
-                                android.text.Html.FROM_HTML_MODE_COMPACT)
+                            SpanSerializer.fromJson(it.content)
                                 .toString().contains(query, ignoreCase = true)
                 }
             }
