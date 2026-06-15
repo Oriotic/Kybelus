@@ -2,7 +2,6 @@ package kybelus.app.notepad
 
 import android.os.Bundle
 import android.text.Editable
-import android.text.Html
 import android.text.Spannable
 import android.text.TextWatcher
 import android.text.style.AbsoluteSizeSpan
@@ -23,7 +22,6 @@ class NoteEditorFragment(
     private val note: Note? = null,
     private val onSave: () -> Unit
 ) : Fragment() {
-
     private var typingBold = false
     private var typingItalic = false
     private var typingFontSize = 16f
@@ -65,7 +63,7 @@ class NoteEditorFragment(
             binding.etEditorTitle.setText(it.title)
             isWatcherEnabled = false
             binding.etEditorContent.setText(
-                Html.fromHtml(it.content, Html.FROM_HTML_MODE_COMPACT),
+                SpanSerializer.fromJson(it.content),
                 android.widget.TextView.BufferType.SPANNABLE
             )
             isWatcherEnabled = true
@@ -82,7 +80,6 @@ class NoteEditorFragment(
         }
 
         setupTextWatcher()
-        setupCursorTracking()
         setupToolbar()
         setupColorPicker(note)
 
@@ -92,9 +89,8 @@ class NoteEditorFragment(
 
         binding.btnSaveNote.setOnClickListener {
             val title = binding.etEditorTitle.text.toString()
-            val content = Html.toHtml(
-                binding.etEditorContent.text,
-                Html.TO_HTML_PARAGRAPH_LINES_INDIVIDUAL
+            val content = SpanSerializer.toJson(
+                binding.etEditorContent.text as Spannable
             )
             val finalTitle = if (title.isNotEmpty()) title else ""
 
@@ -124,59 +120,6 @@ class NoteEditorFragment(
                 parentFragmentManager.popBackStack()
             }
         }
-    }
-
-    private fun setupCursorTracking() {
-        binding.etEditorContent.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) {
-            }
-        })
-
-        binding.etEditorContent.setOnTouchListener { v, _ ->
-            v.performClick()
-            v.post { refreshButtonStates() }
-            false
-        }
-
-        binding.etEditorContent.setOnKeyListener { _, _, _ ->
-            binding.etEditorContent.post { refreshButtonStates() }
-            false
-        }
-    }
-
-    private fun refreshButtonStates() {
-        val editable = binding.etEditorContent.text ?: return
-        val selStart = binding.etEditorContent.selectionStart.coerceAtLeast(0)
-        val selEnd   = binding.etEditorContent.selectionEnd.coerceAtLeast(0)
-
-        val inspectStart = if (selStart == selEnd) (selStart - 1).coerceAtLeast(0) else selStart
-        val inspectEnd   = if (selStart == selEnd) selStart else selEnd
-
-        val styleSpans = editable.getSpans(inspectStart, inspectEnd, StyleSpan::class.java)
-        val hasBold   = styleSpans.any { it.style == android.graphics.Typeface.BOLD }
-        val hasItalic = styleSpans.any { it.style == android.graphics.Typeface.ITALIC }
-
-        val sizeSpans = editable.getSpans(inspectStart, inspectEnd, AbsoluteSizeSpan::class.java)
-        val spanSize  = sizeSpans.lastOrNull()?.size?.toFloat() ?: 16f
-
-        if (selStart == selEnd) {
-            typingBold     = hasBold
-            typingItalic   = hasItalic
-            typingFontSize = spanSize
-        }
-
-        binding.btnBold.alpha     = if (hasBold)   1f else 0.4f
-        binding.btnItalic.alpha   = if (hasItalic) 1f else 0.4f
-        val sizeLabel = when (spanSize) {
-            14f  -> "A-"
-            18f  -> "A+"
-            24f  -> "A++"
-            else -> "A"
-        }
-        binding.btnFontSize.text  = sizeLabel
-        binding.btnFontSize.alpha = if (spanSize != 16f) 1f else 0.4f
     }
 
     private fun setupTextWatcher() {
@@ -228,7 +171,6 @@ class NoteEditorFragment(
         val spans = editable.getSpans(start, end, StyleSpan::class.java)
             .filter { it.style == style }
         if (spans.isEmpty()) return false
-        // Check there are no gaps
         val covered = spans.map { editable.getSpanStart(it)..editable.getSpanEnd(it) }
         for (i in start until end) {
             if (covered.none { i in it }) return false
@@ -280,7 +222,12 @@ class NoteEditorFragment(
             )
         }
 
-        refreshButtonStates()
+        // Update button visual to match state
+        if (style == android.graphics.Typeface.BOLD) {
+            binding.btnBold.alpha = if (typingBold) 1f else 0.4f
+        } else {
+            binding.btnItalic.alpha = if (typingItalic) 1f else 0.4f
+        }
     }
 
     private fun applyOrRemoveFontSize(size: Float) {
@@ -305,7 +252,6 @@ class NoteEditorFragment(
             return
         }
 
-        // Has selection — remove existing size spans and apply the new one
         editable.getSpans(selStart, selEnd, AbsoluteSizeSpan::class.java).forEach { span ->
             val sStart = editable.getSpanStart(span)
             val sEnd   = editable.getSpanEnd(span)
@@ -330,8 +276,6 @@ class NoteEditorFragment(
                 Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
             )
         }
-
-        refreshButtonStates()
     }
 
     private fun setupColorPicker(note: Note?) {
@@ -376,8 +320,6 @@ class NoteEditorFragment(
         }
 
         binding.btnFontSize.setOnClickListener {
-            val selStart = binding.etEditorContent.selectionStart
-            val selEnd   = binding.etEditorContent.selectionEnd
             val nextSize = when (typingFontSize) {
                 16f  -> 18f
                 18f  -> 24f
