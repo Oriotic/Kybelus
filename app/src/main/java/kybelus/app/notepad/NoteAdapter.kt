@@ -1,6 +1,5 @@
 package kybelus.app.notepad
 
-import android.text.Html
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -36,10 +35,7 @@ class NoteAdapter(
             tvNoteTitle.text =
                 if (note.isPinned) "📌 ${note.title}" else note.title
 
-            tvNoteContent.text = Html.fromHtml(
-                note.content,
-                Html.FROM_HTML_MODE_COMPACT
-            )
+            tvNoteContent.text = SpanSerializer.fromJson(note.content)
 
             tvNoteDate.text = note.createdAt
             cardNote.setCardBackgroundColor(note.backgroundColor)
