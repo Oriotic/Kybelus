@@ -100,6 +100,7 @@ app/
         ├── anim/          # Transition animations
         ├── drawable/      # Shape drawables
         ├── menu/          # Navigation menu
+        ├── mipmap/        # Launcher app icons
         ├── values/        # Colors, strings, themes, styles
         └── values-night/  # Dark mode overrides
 ```
