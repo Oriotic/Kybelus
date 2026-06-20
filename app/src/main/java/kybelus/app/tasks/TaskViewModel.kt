@@ -51,6 +51,13 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun clearAllTasks() {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.deleteAllTasks()
+            loadTasks()
+        }
+    }
+
     fun updateTask(task: Task) {
         viewModelScope.launch(Dispatchers.IO) {
             repository.updateTask(task)
