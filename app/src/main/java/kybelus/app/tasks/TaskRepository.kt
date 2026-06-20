@@ -16,6 +16,10 @@ class TaskRepository(private val db: KybelusDatabase) {
         db.taskDao().deleteTask(task)
     }
 
+    fun deleteAllTasks() {
+        db.taskDao().deleteAllTasks()
+    }
+
     fun updateTask(task: Task) {
         db.taskDao().updateTask(task)
     }
