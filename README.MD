@@ -43,7 +43,7 @@ Kybelus is a personal productivity app for Android that brings your tasks, notes
 - Set a daily reminder time for task and event notifications
 - Choose a default note color
 - Set the default screen on app launch
-- Clear all task
+- Clear all tasks
 
 ---
 
