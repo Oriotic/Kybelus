@@ -9,7 +9,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
-import androidx.appcompat.app.AlertDialog
+import android.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -54,6 +54,7 @@ class SettingsFragment : Fragment() {
         setupReminders(prefs)
         setupDefaultNoteColor(prefs)
         setupDefaultView(prefs)
+        setupClearTasks()
     }
 
     private fun setupDarkMode(prefs: SharedPreferences) {
@@ -174,6 +175,23 @@ class SettingsFragment : Fragment() {
                     prefs.edit().putString(KEY_DEFAULT_VIEW, views[which]).apply()
                     binding.tvDefaultView.text = views[which]
                 }
+                .show()
+        }
+    }
+
+    private fun setupClearTasks() {
+        binding.btnClearTasks.setOnClickListener {
+            AlertDialog.Builder(requireContext(), R.style.CenteredDialog)
+                .setTitle("Clear All Tasks")
+                .setMessage("Are you sure you want to delete all tasks? This cannot be undone.")
+                .setPositiveButton("Delete All") { _, _ ->
+                    // Cancel any scheduled reminders before wiping the data
+                    taskViewModel.tasks.value?.forEach { task ->
+                        NotificationScheduler.cancelTaskReminder(requireContext(), task.id)
+                    }
+                    taskViewModel.clearAllTasks()
+                }
+                .setNegativeButton("Cancel", null)
                 .show()
         }
     }
