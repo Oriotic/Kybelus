@@ -15,4 +15,5 @@
     <color name="text_secondary">#9E8BB5</color>
     <color name="card_background">#FFFFFF</color>
     <color name="app_background">#F6F0FF</color>
+    <color name="toolbar_button">#6650A4</color>
 </resources>
