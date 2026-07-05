@@ -32,6 +32,13 @@ class NoteEditorFragment(
     private val viewModel: NoteViewModel by activityViewModels()
     private var selectedColor = android.graphics.Color.WHITE
 
+    private data class EditorSnapshot(val json: String, val cursorStart: Int, val cursorEnd: Int)
+
+    private val undoStack = ArrayDeque<EditorSnapshot>()
+    private val redoStack = ArrayDeque<EditorSnapshot>()
+    private val MAX_HISTORY = 50
+    private var isRestoringSnapshot = false
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -59,7 +66,6 @@ class NoteEditorFragment(
         super.onViewCreated(view, savedInstanceState)
 
         note?.let {
-            binding.tvEditorTitle.text = "✏️ Edit Note"
             binding.etEditorTitle.setText(it.title)
             isWatcherEnabled = false
             binding.etEditorContent.setText(
@@ -82,6 +88,7 @@ class NoteEditorFragment(
         setupTextWatcher()
         setupToolbar()
         setupColorPicker(note)
+        setupSelectionTracking()
 
         binding.btnBack.setOnClickListener {
             parentFragmentManager.popBackStack()
@@ -124,12 +131,22 @@ class NoteEditorFragment(
 
     private fun setupTextWatcher() {
         binding.etEditorContent.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+                if (!isWatcherEnabled || s == null) return
+                val prevCh = if (start > 0) s.getOrNull(start - 1) else null
+                if (prevCh == null || prevCh == ' ' || prevCh == '\n' || prevCh == '.' || prevCh == ',' || prevCh == '!' || prevCh == '?') {
+                    pushSnapshot()
+                } else if (undoStack.isEmpty() && s.isNotEmpty()) {
+                    // First edit inside existing text — capture the original state
+                    pushSnapshot()
+                }
+            }
+
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
 
             override fun afterTextChanged(s: Editable?) {
                 if (!isWatcherEnabled || s == null) return
-                val end   = binding.etEditorContent.selectionEnd
+                val end = binding.etEditorContent.selectionEnd
                 val start = end - 1
                 if (start < 0) return
 
@@ -141,29 +158,102 @@ class NoteEditorFragment(
                     }
                 }
 
-                if (typingBold) {
-                    s.setSpan(
-                        StyleSpan(android.graphics.Typeface.BOLD),
-                        start, end,
-                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                    )
-                }
-                if (typingItalic) {
-                    s.setSpan(
-                        StyleSpan(android.graphics.Typeface.ITALIC),
-                        start, end,
-                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                    )
-                }
-                if (typingFontSize != 16f) {
-                    s.setSpan(
-                        AbsoluteSizeSpan(typingFontSize.toInt(), true),
-                        start, end,
-                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                    )
-                }
+                enforceStyleOnInsertedRange(s, start, end, android.graphics.Typeface.BOLD, typingBold)
+                enforceStyleOnInsertedRange(s, start, end, android.graphics.Typeface.ITALIC, typingItalic)
+                enforceSizeOnInsertedRange(s, start, end, typingFontSize)
             }
         })
+    }
+
+    private fun enforceStyleOnInsertedRange(s: Editable, start: Int, end: Int, style: Int, shouldBeStyled: Boolean) {
+        if (shouldBeStyled) {
+            s.setSpan(StyleSpan(style), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            return
+        }
+        s.getSpans(start, end, StyleSpan::class.java)
+            .filter { it.style == style }
+            .forEach { span ->
+                val sStart = s.getSpanStart(span)
+                val sEnd = s.getSpanEnd(span)
+                s.removeSpan(span)
+                if (sStart < start) s.setSpan(StyleSpan(style), sStart, start, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                if (sEnd > end) s.setSpan(StyleSpan(style), end, sEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            }
+    }
+
+    private fun enforceSizeOnInsertedRange(s: Editable, start: Int, end: Int, targetSize: Float) {
+        if (targetSize != 16f) {
+            s.setSpan(AbsoluteSizeSpan(targetSize.toInt(), true), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            return
+        }
+        s.getSpans(start, end, AbsoluteSizeSpan::class.java).forEach { span ->
+            val sStart = s.getSpanStart(span)
+            val sEnd = s.getSpanEnd(span)
+            s.removeSpan(span)
+            if (sStart < start) s.setSpan(AbsoluteSizeSpan(span.size, true), sStart, start, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            if (sEnd > end) s.setSpan(AbsoluteSizeSpan(span.size, true), end, sEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+    }
+
+    private fun setupSelectionTracking() {
+        binding.etEditorContent.onSelectionChangedListener = { start, end ->
+            if (isWatcherEnabled) updateToolbarStateForSelection(start, end)
+        }
+        updateToolbarStateForSelection(
+            binding.etEditorContent.selectionStart,
+            binding.etEditorContent.selectionEnd
+        )
+    }
+
+    private fun updateToolbarStateForSelection(selStart: Int, selEnd: Int) {
+        val editable = binding.etEditorContent.text ?: return
+        if (selStart == selEnd) {
+            val (bold, italic, size) = stylesAtCursor(editable, selStart)
+            typingBold = bold
+            typingItalic = italic
+            typingFontSize = size
+        } else {
+            val start = minOf(selStart, selEnd)
+            val end = maxOf(selStart, selEnd)
+            typingBold = rangeIsFullyStyled(editable, start, end, android.graphics.Typeface.BOLD)
+            typingItalic = rangeIsFullyStyled(editable, start, end, android.graphics.Typeface.ITALIC)
+            typingFontSize = uniformSizeInRange(editable, start, end) ?: 16f
+        }
+        refreshToolbarUI()
+    }
+
+    private fun stylesAtCursor(editable: Editable, cursor: Int): Triple<Boolean, Boolean, Float> {
+        if (editable.isEmpty()) return Triple(false, false, 16f)
+        val checkPos = (cursor - 1).coerceIn(0, editable.length - 1)
+        val end = checkPos + 1
+        val styleSpans = editable.getSpans(checkPos, end, StyleSpan::class.java)
+        val isBold = styleSpans.any { it.style == android.graphics.Typeface.BOLD }
+        val isItalic = styleSpans.any { it.style == android.graphics.Typeface.ITALIC }
+        val size = editable.getSpans(checkPos, end, AbsoluteSizeSpan::class.java).firstOrNull()?.size?.toFloat() ?: 16f
+        return Triple(isBold, isItalic, size)
+    }
+
+    private fun uniformSizeInRange(editable: Editable, start: Int, end: Int): Float? {
+        if (start >= end) return null
+        val spans = editable.getSpans(start, end, AbsoluteSizeSpan::class.java)
+        if (spans.isEmpty()) return null
+        val distinctSizes = spans.map { it.size.toFloat() }.distinct()
+        if (distinctSizes.size != 1) return null
+        val covered = spans.map { editable.getSpanStart(it)..editable.getSpanEnd(it) }
+        for (i in start until end) if (covered.none { i in it }) return null
+        return distinctSizes.first()
+    }
+
+    private fun refreshToolbarUI() {
+        binding.btnBold.alpha = if (typingBold) 1f else 0.4f
+        binding.btnItalic.alpha = if (typingItalic) 1f else 0.4f
+        binding.btnFontSize.alpha = if (typingFontSize != 16f) 1f else 0.4f
+        binding.btnFontSize.text = when (typingFontSize) {
+            14f  -> "A-"
+            18f  -> "A+"
+            24f  -> "A²"
+            else -> "A"
+        }
     }
 
     private fun rangeIsFullyStyled(editable: Editable, start: Int, end: Int, style: Int): Boolean {
@@ -184,16 +274,13 @@ class NoteEditorFragment(
         val selEnd   = binding.etEditorContent.selectionEnd
 
         if (selStart == selEnd) {
-            if (style == android.graphics.Typeface.BOLD) {
-                typingBold   = !typingBold
-                binding.btnBold.alpha = if (typingBold) 1f else 0.4f
-            } else {
-                typingItalic = !typingItalic
-                binding.btnItalic.alpha = if (typingItalic) 1f else 0.4f
-            }
+            if (style == android.graphics.Typeface.BOLD) typingBold = !typingBold
+            else typingItalic = !typingItalic
+            refreshToolbarUI()
             return
         }
 
+        pushSnapshot()
         val alreadyStyled = rangeIsFullyStyled(editable, selStart, selEnd, style)
         if (alreadyStyled) {
             editable.getSpans(selStart, selEnd, StyleSpan::class.java)
@@ -223,11 +310,9 @@ class NoteEditorFragment(
         }
 
         // Update button visual to match state
-        if (style == android.graphics.Typeface.BOLD) {
-            binding.btnBold.alpha = if (typingBold) 1f else 0.4f
-        } else {
-            binding.btnItalic.alpha = if (typingItalic) 1f else 0.4f
-        }
+        if (style == android.graphics.Typeface.BOLD) typingBold = !alreadyStyled
+        else typingItalic = !alreadyStyled
+        refreshToolbarUI()
     }
 
     private fun applyOrRemoveFontSize(size: Float) {
@@ -237,18 +322,9 @@ class NoteEditorFragment(
 
         if (selStart == selEnd) {
             typingFontSize = when (typingFontSize) {
-                16f  -> 18f
-                18f  -> 24f
-                24f  -> 14f
-                else -> 16f
+                16f -> 18f; 18f -> 24f; 24f -> 14f; else -> 16f
             }
-            binding.btnFontSize.text = when (typingFontSize) {
-                14f  -> "A-"
-                18f  -> "A+"
-                24f  -> "A++"
-                else -> "A"
-            }
-            binding.btnFontSize.alpha = if (typingFontSize != 16f) 1f else 0.4f
+            refreshToolbarUI()
             return
         }
 
@@ -276,6 +352,9 @@ class NoteEditorFragment(
                 Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
             )
         }
+
+        typingFontSize = size
+        refreshToolbarUI()
     }
 
     private fun setupColorPicker(note: Note?) {
@@ -301,10 +380,8 @@ class NoteEditorFragment(
     }
 
     private fun setupToolbar() {
-        binding.btnBold.alpha     = 0.4f
-        binding.btnItalic.alpha   = 0.4f
-        binding.btnFontSize.alpha = 0.4f
-        binding.btnList.alpha     = 0.4f
+        refreshToolbarUI()
+        binding.btnList.alpha = 0.4f
 
         binding.btnColor.setOnClickListener {
             binding.colorPickerRow.visibility =
@@ -357,5 +434,70 @@ class NoteEditorFragment(
             binding.btnList.alpha = 0.4f
             binding.listPickerRow.visibility = View.GONE
         }
+
+        binding.btnUndo.setOnClickListener { undo() }
+        binding.btnRedo.setOnClickListener { redo() }
+        updateUndoRedoButtons()
+    }
+
+    private fun pushSnapshot() {
+        if (isRestoringSnapshot) return
+        val editable = binding.etEditorContent.text ?: return
+        val snapshot = EditorSnapshot(
+            json = SpanSerializer.toJson(editable as Spannable),
+            cursorStart = binding.etEditorContent.selectionStart,
+            cursorEnd = binding.etEditorContent.selectionEnd
+        )
+        // Don't push a duplicate of the top
+        if (undoStack.lastOrNull()?.json == snapshot.json) return
+        undoStack.addLast(snapshot)
+        if (undoStack.size > MAX_HISTORY) undoStack.removeFirst()
+        redoStack.clear()
+        updateUndoRedoButtons()
+    }
+
+    private fun undo() {
+        if (undoStack.isEmpty()) return
+        val current = EditorSnapshot(
+            json = SpanSerializer.toJson(binding.etEditorContent.text as Spannable),
+            cursorStart = binding.etEditorContent.selectionStart,
+            cursorEnd = binding.etEditorContent.selectionEnd
+        )
+        redoStack.addLast(current)
+        restoreSnapshot(undoStack.removeLast())
+        updateUndoRedoButtons()
+    }
+
+    private fun redo() {
+        if (redoStack.isEmpty()) return
+        val current = EditorSnapshot(
+            json = SpanSerializer.toJson(binding.etEditorContent.text as Spannable),
+            cursorStart = binding.etEditorContent.selectionStart,
+            cursorEnd = binding.etEditorContent.selectionEnd
+        )
+        undoStack.addLast(current)
+        restoreSnapshot(redoStack.removeLast())
+        updateUndoRedoButtons()
+    }
+
+    private fun restoreSnapshot(snapshot: EditorSnapshot) {
+        isRestoringSnapshot = true
+        isWatcherEnabled = false
+        binding.etEditorContent.setText(
+            SpanSerializer.fromJson(snapshot.json),
+            android.widget.TextView.BufferType.SPANNABLE
+        )
+        val len = binding.etEditorContent.text?.length ?: 0
+        val safeStart = snapshot.cursorStart.coerceIn(0, len)
+        val safeEnd = snapshot.cursorEnd.coerceIn(0, len)
+        binding.etEditorContent.setSelection(safeStart, safeEnd)
+        isWatcherEnabled = true
+        isRestoringSnapshot = false
+        updateToolbarStateForSelection(safeStart, safeEnd)
+    }
+
+    private fun updateUndoRedoButtons() {
+        binding.btnUndo.alpha = if (undoStack.isNotEmpty()) 1f else 0.3f
+        binding.btnRedo.alpha = if (redoStack.isNotEmpty()) 1f else 0.3f
     }
 }
