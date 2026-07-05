@@ -84,7 +84,9 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"
             android:orientation="horizontal"
-            android:background="@color/card_background"
+            android:background="@drawable/bg_dialog"
+            android:layout_marginBottom="4dp"
+            android:layout_marginHorizontal="8dp"
             android:padding="8dp"
             android:elevation="8dp"
             android:visibility="gone">
