@@ -5,7 +5,7 @@
         <item name="colorSecondary">@color/secondary</item>
         <item name="android:colorBackground">@color/background</item>
         <item name="android:statusBarColor">@color/primary</item>
-
+        <item name="android:navigationBarColor">@color/app_background</item>
         <!-- NavigationView rounded corners -->
         <item name="navigationViewStyle">@style/Widget.NoRoundedNav</item>
     </style>
