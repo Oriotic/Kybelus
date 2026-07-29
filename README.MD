@@ -7,7 +7,7 @@ Kybelus is a personal productivity app for Android that brings your tasks, notes
 ## 📸 Screenshots
 
 <p align="center">
-  <img src="assets/tasks.png" width="30%" alt="Tasks"/> <img src="assets/notepad.png" width="30%" alt="Notepad"/> <img src="assets/calendar.png" width="30%" alt="Calendar"/>
+  <img src="assets/tasks.png" width="240" alt="Tasks"/> <img src="assets/notepad.png" width="240" alt="Notepad"/> <img src="assets/calendar.png" width="240" alt="Calendar"/>
 </p>
 
 ---
